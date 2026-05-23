@@ -15,6 +15,7 @@ import {
   Activity,
   ChevronRight,
   ExternalLink,
+  Terminal as TerminalIcon,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -816,7 +817,7 @@ function AboutSection() {
       <div className="rounded-lg border border-border bg-card/40 p-5">
         <div className="flex items-start gap-4">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-            <Server className="size-5" />
+            <TerminalIcon className="size-5" strokeWidth={2.5} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
