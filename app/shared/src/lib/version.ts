@@ -3,6 +3,10 @@ import { api } from './api'
 export interface VersionInfo {
   current: string
   commit?: string
+  // date: build timestamp (RFC3339); platform: GOOS/GOARCH. Both stamped
+  // at build time and surfaced in the About panel.
+  date?: string
+  platform?: string
   latest?: string
   updateAvailable: boolean
   notesUrl?: string

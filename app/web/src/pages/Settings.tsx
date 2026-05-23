@@ -14,6 +14,7 @@ import {
   Info,
   Activity,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -793,114 +794,220 @@ function AboutSection() {
 
   const busy = phase === 'upgrading' || !!data?.pending
   const canSelfUpdate = !!data?.selfUpdate
+  const REPO = 'https://github.com/Opendray/opendray'
+  const built = (() => {
+    if (!data?.date) return undefined
+    const ms = Date.parse(data.date)
+    return Number.isNaN(ms)
+      ? data.date
+      : new Date(ms).toLocaleString(undefined, {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        })
+  })()
+  const linkCls =
+    'inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground'
+
   return (
-    <div>
+    <div className="max-w-2xl space-y-4">
       <SectionHeader title={t('web.settings.about.title')} />
-      <p className="text-[12px] text-muted-foreground leading-relaxed mb-3">
-        {t('web.settings.about.description')}
-      </p>
 
-      <Field label={t('web.settings.about.version')} value={data?.current ?? '…'} monospace />
-      {data?.commit && (
-        <Field label={t('web.settings.about.commit')} value={data.commit} monospace />
-      )}
-
-      {/* Status line — always shown */}
-      <div className="mt-3 text-[12px]">
-        {data?.updateAvailable ? (
-          <span className="font-medium">
-            {t('web.settings.about.updateAvailable', { version: data.latest })}{' '}
-            {data.notesUrl && (
+      {/* Product identity */}
+      <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="flex items-start gap-4">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+            <Server className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-[15px] font-semibold leading-none text-foreground">
+                opendray
+              </h3>
+              <span className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                v{data?.current ?? '—'}
+              </span>
+              {data &&
+                (data.updateAvailable ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-foreground">
+                    <span className="size-1.5 rounded-full bg-state-idle" />
+                    {t('web.settings.about.updateAvailable', { version: data.latest })}
+                  </span>
+                ) : data.checkError ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-2 py-0.5 text-[10px] text-muted-foreground">
+                    <span className="size-1.5 rounded-full bg-muted-foreground/50" />
+                    {t('web.settings.about.checkFailed')}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-foreground">
+                    <span className="size-1.5 rounded-full bg-state-running" />
+                    {t('web.settings.about.upToDate')}
+                  </span>
+                ))}
+            </div>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+              {t('web.settings.about.description')}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
+              <a href={REPO} target="_blank" rel="noreferrer" className={linkCls}>
+                Documentation <ExternalLink className="size-3" />
+              </a>
               <a
-                href={data.notesUrl}
+                href={data?.notesUrl || `${REPO}/releases`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[11px] text-primary underline"
+                className={linkCls}
               >
-                {t('web.settings.about.releaseNotes')}
+                Release notes <ExternalLink className="size-3" />
               </a>
-            )}
-          </span>
-        ) : data?.checkError ? (
-          <span className="text-muted-foreground">
-            {t('web.settings.about.checkFailed')}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">
-            {t('web.settings.about.upToDate')}
-          </span>
-        )}
+              <a href={REPO} target="_blank" rel="noreferrer" className={linkCls}>
+                Source <ExternalLink className="size-3" />
+              </a>
+              <a
+                href={`${REPO}/blob/main/LICENSE`}
+                target="_blank"
+                rel="noreferrer"
+                className={linkCls}
+              >
+                License · Apache-2.0 <ExternalLink className="size-3" />
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Controls — always visible */}
-      {phase === 'confirming' ? (
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">
-            {t('web.settings.about.confirmRestart')}
-          </span>
-          <button
-            onClick={() => startUpgrade(confirmForce)}
-            className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground"
-          >
-            {t('web.settings.about.confirmUpgrade')}
-          </button>
-          <button
-            onClick={() => setPhase('idle')}
-            className="rounded border border-border px-2.5 py-1 text-[11px]"
-          >
-            {t('common.cancel')}
-          </button>
-        </div>
-      ) : (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button
-            onClick={checkNow}
-            disabled={checking || busy}
-            className="rounded border border-border px-2.5 py-1 text-[11px] disabled:opacity-50"
-          >
-            {checking
-              ? t('web.settings.about.checking')
-              : t('web.settings.about.checkUpdates')}
-          </button>
-
-          {data?.updateAvailable && canSelfUpdate && (
-            <button
-              onClick={() => {
-                setConfirmForce(false)
-                setPhase('confirming')
-              }}
-              disabled={busy}
-              className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-50"
-            >
-              {busy
-                ? t('web.settings.about.upgradingShort')
-                : t('web.settings.about.updateNow')}
-            </button>
+      {/* Build details */}
+      <div className="rounded-lg border border-border bg-card/40 p-4">
+        <h4 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Build
+        </h4>
+        <dl className="grid grid-cols-[7rem_1fr] gap-y-2 text-[12px]">
+          <dt className="text-muted-foreground">{t('web.settings.about.version')}</dt>
+          <dd className="font-mono text-foreground">{data?.current ?? '—'}</dd>
+          {data?.commit && (
+            <>
+              <dt className="text-muted-foreground">{t('web.settings.about.commit')}</dt>
+              <dd className="font-mono text-foreground">{data.commit}</dd>
+            </>
           )}
-
-          {!data?.updateAvailable && !data?.checkError && canSelfUpdate && (
-            <button
-              onClick={() => {
-                setConfirmForce(true)
-                setPhase('confirming')
-              }}
-              disabled={busy}
-              className="rounded border border-border px-2.5 py-1 text-[11px] disabled:opacity-50"
-            >
-              {busy
-                ? t('web.settings.about.upgradingShort')
-                : t('web.settings.about.reinstall')}
-            </button>
+          {built && (
+            <>
+              <dt className="text-muted-foreground">Built</dt>
+              <dd className="text-foreground">{built}</dd>
+            </>
           )}
+          {data?.platform && (
+            <>
+              <dt className="text-muted-foreground">Platform</dt>
+              <dd className="font-mono text-foreground">{data.platform}</dd>
+            </>
+          )}
+        </dl>
+      </div>
 
-          {data?.updateAvailable && !canSelfUpdate && (
-            <span className="text-[11px] text-muted-foreground">
-              {t('web.settings.about.guidedHint')}
-              <code className="ml-1 font-mono text-foreground">opendray update</code>
+      {/* Updates */}
+      <div className="rounded-lg border border-border bg-card/40 p-4">
+        <h4 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Updates
+        </h4>
+        <div className="text-[12px]">
+          {data?.updateAvailable ? (
+            <span className="font-medium text-foreground">
+              {t('web.settings.about.updateAvailable', { version: data.latest })}{' '}
+              {data.notesUrl && (
+                <a
+                  href={data.notesUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] text-primary underline"
+                >
+                  {t('web.settings.about.releaseNotes')}
+                </a>
+              )}
+            </span>
+          ) : data?.checkError ? (
+            <span className="text-muted-foreground">
+              {t('web.settings.about.checkFailed')}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">
+              {t('web.settings.about.upToDate')}
             </span>
           )}
         </div>
-      )}
+
+        {phase === 'confirming' ? (
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">
+              {t('web.settings.about.confirmRestart')}
+            </span>
+            <button
+              onClick={() => startUpgrade(confirmForce)}
+              className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground"
+            >
+              {t('web.settings.about.confirmUpgrade')}
+            </button>
+            <button
+              onClick={() => setPhase('idle')}
+              className="rounded border border-border px-2.5 py-1 text-[11px]"
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              onClick={checkNow}
+              disabled={checking || busy}
+              className="rounded border border-border px-2.5 py-1 text-[11px] disabled:opacity-50"
+            >
+              {checking
+                ? t('web.settings.about.checking')
+                : t('web.settings.about.checkUpdates')}
+            </button>
+
+            {data?.updateAvailable && canSelfUpdate && (
+              <button
+                onClick={() => {
+                  setConfirmForce(false)
+                  setPhase('confirming')
+                }}
+                disabled={busy}
+                className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-50"
+              >
+                {busy
+                  ? t('web.settings.about.upgradingShort')
+                  : t('web.settings.about.updateNow')}
+              </button>
+            )}
+
+            {!data?.updateAvailable && !data?.checkError && canSelfUpdate && (
+              <button
+                onClick={() => {
+                  setConfirmForce(true)
+                  setPhase('confirming')
+                }}
+                disabled={busy}
+                className="rounded border border-border px-2.5 py-1 text-[11px] disabled:opacity-50"
+              >
+                {busy
+                  ? t('web.settings.about.upgradingShort')
+                  : t('web.settings.about.reinstall')}
+              </button>
+            )}
+
+            {data?.updateAvailable && !canSelfUpdate && (
+              <span className="text-[11px] text-muted-foreground">
+                {t('web.settings.about.guidedHint')}
+                <code className="ml-1 font-mono text-foreground">opendray update</code>
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      <p className="px-1 text-[11px] text-muted-foreground/50">
+        Apache-2.0 licensed · opendray project
+      </p>
     </div>
   )
 }
