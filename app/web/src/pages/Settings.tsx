@@ -801,10 +801,7 @@ function AboutSection() {
     const ms = Date.parse(data.date)
     return Number.isNaN(ms)
       ? data.date
-      : new Date(ms).toLocaleString(undefined, {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        })
+      : new Date(ms).toLocaleDateString(undefined, { dateStyle: 'medium' })
   })()
   const linkCls =
     'inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground'
