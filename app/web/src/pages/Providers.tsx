@@ -279,11 +279,10 @@ function ProviderDetail({
                       const ok = await confirm({
                         title: `Upgrade ${label} CLI?`,
                         description:
-                          `${n} session${n === 1 ? ' is' : 's are'} currently using ${m.id}. ` +
-                          `Upgrading swaps the binary on disk and may interrupt ${n === 1 ? 'it' : 'them'} mid-run. Continue?`,
-                        confirmLabel: 'Upgrade anyway',
+                          `${n} session${n === 1 ? '' : 's'} currently running on ${m.id}. ` +
+                          `${n === 1 ? "It'll" : "They'll"} keep using the old version in memory — new sessions (and any on-demand code loads) pick up the new one. Continue?`,
+                        confirmLabel: 'Upgrade',
                         cancelLabel: 'Cancel',
-                        destructive: true,
                       })
                       if (!ok) return
                     }
