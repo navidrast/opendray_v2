@@ -14,6 +14,7 @@ import { ProviderModelsSection } from '@/components/providers/ProviderModelsSect
 import { BrandAvatar } from '@/components/BrandAvatar'
 import { providerIconKey } from '@/lib/providerIcons'
 import { ClaudeAccountsPanel } from '@/components/providers/ClaudeAccountsPanel'
+import { useConfirmDialog } from '@/components/ConfirmDialog'
 import {
   listProviders,
   toggleProvider,
@@ -180,13 +181,19 @@ function ProviderDetail({
   const m = provider.manifest
   const rt = provider.runtime
   // Latest-version check is a network (npm) call, so it runs on its own
-  // endpoint and only for installed CLI providers.
+  // endpoint and only for installed CLI providers. staleTime aligns with
+  // the server-side npm cache (1h) and refetch-on-focus/mount is off so
+  // toggling between tabs doesn't keep round-tripping for data the
+  // backend would just return from cache anyway.
   const { data: upd } = useQuery({
     queryKey: ['provider-update', m.id],
     queryFn: () => checkProviderUpdate(m.id),
     enabled: m.kind === 'cli' && !!rt?.installed,
-    staleTime: 60_000,
+    staleTime: 60 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   })
+  const { confirm, dialog: confirmDialog } = useConfirmDialog()
   const updateMut = useMutation({
     mutationFn: () => updateProvider(m.id),
     onSuccess: (res) => {
@@ -265,7 +272,23 @@ function ProviderDetail({
                   variant="outline"
                   className="h-6 px-2 text-[11px]"
                   disabled={updateMut.isPending}
-                  onClick={() => updateMut.mutate()}
+                  onClick={async () => {
+                    const n = upd?.activeSessions ?? 0
+                    if (n > 0) {
+                      const label = m.label ?? m.id
+                      const ok = await confirm({
+                        title: `Upgrade ${label} CLI?`,
+                        description:
+                          `${n} session${n === 1 ? ' is' : 's are'} currently using ${m.id}. ` +
+                          `Upgrading swaps the binary on disk and may interrupt ${n === 1 ? 'it' : 'them'} mid-run. Continue?`,
+                        confirmLabel: 'Upgrade anyway',
+                        cancelLabel: 'Cancel',
+                        destructive: true,
+                      })
+                      if (!ok) return
+                    }
+                    updateMut.mutate()
+                  }}
                 >
                   {updateMut.isPending ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -375,6 +398,7 @@ function ProviderDetail({
             : t('web.providers.detail.save')}
         </Button>
       </div>
+      {confirmDialog}
     </main>
   )
 }
