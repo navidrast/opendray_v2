@@ -275,7 +275,7 @@ function ProviderDetail({
                   onClick={async () => {
                     const n = upd?.activeSessions ?? 0
                     if (n > 0) {
-                      const label = m.label ?? m.id
+                      const label = m.displayName ?? m.id
                       const ok = await confirm({
                         title: `Upgrade ${label} CLI?`,
                         description:
